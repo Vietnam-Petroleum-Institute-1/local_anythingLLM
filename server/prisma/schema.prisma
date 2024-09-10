@@ -16,7 +16,7 @@ generator client {
 // schema.prisma
 datasource db {
   provider = "mysql"
-  url      = "mysql://" + env("USER") + ":"+ env("PASSWORD") + env("SEVER")
+  url      = "mysql://" + env("USER") + ":"+ env("PASSWORD") + env("SEVER") + "/" + env("TABLE")
 }
 
 
