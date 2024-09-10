@@ -1,10 +1,18 @@
-// vite.config.js
-import { defineConfig } from "file:///home/nam/Projects/anything-llm/frontend/node_modules/vite/dist/node/index.js";
+// // vite.config.js
+// import { defineConfig } from "file:///home/nam/Projects/anything-llm/frontend/node_modules/vite/dist/node/index.js";
+// import { fileURLToPath, URL } from "url";
+
+// // postcss.config.js
+// import tailwind from "file:///home/nam/Projects/anything-llm/frontend/node_modules/tailwindcss/lib/index.js";
+// import autoprefixer from "file:///home/nam/Projects/anything-llm/frontend/node_modules/autoprefixer/lib/autoprefixer.js";
+
+
+import { defineConfig } from "file:///frontend/node_modules/vite/dist/node/index.js";
 import { fileURLToPath, URL } from "url";
 
 // postcss.config.js
-import tailwind from "file:///home/nam/Projects/anything-llm/frontend/node_modules/tailwindcss/lib/index.js";
-import autoprefixer from "file:///home/nam/Projects/anything-llm/frontend/node_modules/autoprefixer/lib/autoprefixer.js";
+import tailwind from "file:///frontend/node_modules/tailwindcss/lib/index.js";
+import autoprefixer from "file:///frontend/node_modules/autoprefixer/lib/autoprefixer.js";
 
 // tailwind.config.js
 var tailwind_config_default = {
@@ -159,10 +167,14 @@ var postcss_config_default = {
 };
 
 // vite.config.js
-import react from "file:///home/nam/Projects/anything-llm/frontend/node_modules/@vitejs/plugin-react/dist/index.mjs";
+// import react from "file:///home/nam/Projects/anything-llm/frontend/node_modules/@vitejs/plugin-react/dist/index.mjs";
+// import dns from "dns";
+// import { visualizer } from "file:///home/nam/Projects/anything-llm/frontend/node_modules/rollup-plugin-visualizer/dist/plugin/index.js";
+// var __vite_injected_original_import_meta_url = "file:///home/nam/Projects/anything-llm/frontend/vite.config.js";
+import react from "file:///frontend/node_modules/@vitejs/plugin-react/dist/index.mjs";
 import dns from "dns";
-import { visualizer } from "file:///home/nam/Projects/anything-llm/frontend/node_modules/rollup-plugin-visualizer/dist/plugin/index.js";
-var __vite_injected_original_import_meta_url = "file:///home/nam/Projects/anything-llm/frontend/vite.config.js";
+import { visualizer } from "file:///frontend/node_modules/rollup-plugin-visualizer/dist/plugin/index.js";
+var __vite_injected_original_import_meta_url = "file://frontend/vite.config.js";
 dns.setDefaultResultOrder("verbatim");
 var vite_config_default = defineConfig({
   assetsInclude: [

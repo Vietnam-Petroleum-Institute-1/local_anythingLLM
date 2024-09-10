@@ -16,7 +16,7 @@ generator client {
 // schema.prisma
 datasource db {
   provider = "mysql"
-  url      = "mysql://" + env("USER") + ":"+ env("PASSWORD") + env("SEVER") + "/" + env("TABLE")
+  url      = env("DATABASE_URL")
 }
 
 
@@ -34,7 +34,7 @@ model workspace_documents {
   filename             String
   docpath              String
   workspaceId          Int
-  metadata             String?
+  metadata             String?               @db.Text
   pinned               Boolean?              @default(false)
   watched              Boolean?              @default(false)
   createdAt            DateTime              @default(now())
@@ -116,7 +116,7 @@ model document_vectors {
 model welcome_messages {
   id         Int      @id @default(autoincrement())
   user       String
-  response   String
+  response   String   @db.Text
   orderIndex Int?
   createdAt  DateTime @default(now())
 }
@@ -130,7 +130,7 @@ model workspaces {
   openAiTemp                   Float?
   openAiHistory                Int                            @default(20)
   lastUpdatedAt                DateTime                       @default(now())
-  openAiPrompt                 String?
+  openAiPrompt                 String?                        @db.Text
   similarityThreshold          Float?                         @default(0.25)
   chatProvider                 String?
   chatModel                    String?
@@ -179,7 +179,7 @@ model workspace_chats {
   id             Int      @id @default(autoincrement())
   workspaceId    Int
   prompt         String
-  response       String
+  response       String   @db.Text
   include        Boolean  @default(true)
   user_id        Int?
   thread_id      Int? // No relation to prevent whole table migration
@@ -250,7 +250,7 @@ model embed_configs {
 model embed_chats {
   id                     Int           @id @default(autoincrement())
   prompt                 String
-  response               String
+  response               String        @db.Text
   session_id             String
   include                Boolean       @default(true)
   connection_information String?
@@ -264,7 +264,7 @@ model embed_chats {
 model event_logs {
   id         Int      @id @default(autoincrement())
   event      String
-  metadata   String?
+  metadata   String?  @db.Text
   userId     Int?
   occurredAt DateTime @default(now())
 

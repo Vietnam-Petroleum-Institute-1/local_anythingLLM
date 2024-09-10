@@ -7,11 +7,12 @@ const storageDir = process.env.STORAGE_DIR || "/default/storage/path";
 const documentsPath =
   process.env.NODE_ENV === "development"
     ? path.resolve(__dirname, `../../storage/documents`)
-    : path.resolve("home/nam/Projects/anything-llm/Storage/", `documents`);
+    : path.resolve("Storage/", `documents`);
 const vectorCachePath =
   process.env.NODE_ENV === "development"
     ? path.resolve(__dirname, `../../storage/vector-cache`)
-    : path.resolve("home/nam/Projects/anything-llm/Storage/", `vector-cache`);
+    // : path.resolve("home/nam/Projects/anything-llm/Storage/", `vector-cache`);
+    : path.resolve("Storage/", `vector-cache`);
 
 // Should take in a folder that is a subfolder of documents
 // eg: youtube-subject/video-123.json

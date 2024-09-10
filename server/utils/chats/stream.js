@@ -262,7 +262,7 @@ async function streamChatWithWorkspace(
       workspaceId: workspace.id || null,
       prompt: message,
       response: { text: completeText, sources, type: chatMode, attachments },
-      threadId: thread?.id || "asvsd",
+      threadId: thread?.id || null,
       user,
     });
 
@@ -271,7 +271,7 @@ async function streamChatWithWorkspace(
       type: "finalizeResponseStream",
       close: true,
       error: false,
-      chatId: chat?.id || "asvsd",
+      chatId: chat?.id || null,
     });
     return;
   }
