@@ -17,19 +17,30 @@ const { processRawText } = require("./processRawText");
 const { verifyPayloadIntegrity } = require("./middleware/verifyIntegrity");
 const app = express();
 
-app.use(cors({ origin: true }));
-app.use(
-  bodyParser.text(),
-  bodyParser.json(),
-  bodyParser.urlencoded({
-    extended: true,
-  })
-);
+app.use(cors({ origin: '*', credentials: true, }));
+// app.use(bodyParser.urlencoded({
+//   extended: false
+// }));
+app.use(bodyParser.json());
+app.use((err, req, res, next) => {
+  if (err) {
+    console.log('Invalid Request data')
+    res.send('Invalid Request data')
+  } else {
+    next()
+  }
+})
+
+app.get("/", (req, res) => {
+  res.send("Collector API");
+})
 
 app.post(
   "/process",
   [verifyPayloadIntegrity],
   async function (request, response) {
+    console.log("AAAAAAAAAAAAAAAAAAA");
+
     const { filename, options = {} } = reqBody(request);
     try {
       const targetFilename = path

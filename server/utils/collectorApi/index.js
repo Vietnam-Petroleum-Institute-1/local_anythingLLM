@@ -48,9 +48,8 @@ class CollectorApi {
     const data = JSON.stringify({
       filename,
       options: this.#attachOptions(),
-    });
-
-    return await fetch(`${this.endpoint}/process`, {
+    });    
+    return await fetch(`http://localhost:8888/process`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

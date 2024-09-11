@@ -30,6 +30,8 @@ class CommunicationKey {
   verify(signature = "", textData = "") {
     try {
       let data = textData;
+      console.log("AAAAAAAA ", data);
+      
       if (typeof textData !== "string") data = JSON.stringify(data);
       return crypto.verify(
         "RSA-SHA256",

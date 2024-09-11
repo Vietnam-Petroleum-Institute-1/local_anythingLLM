@@ -118,6 +118,7 @@ function workspaceEndpoints(app) {
       try {
         const Collector = new CollectorApi();
         const { originalname } = request.file;
+        console.log(originalname);
         const processingOnline = await Collector.online();
 
         if (!processingOnline) {
@@ -132,7 +133,7 @@ function workspaceEndpoints(app) {
         }
 
         const { success, reason } =
-          await Collector.processDocument(originalname);
+          await Collector.processDocument(originalname);          
         if (!success) {
           response.status(500).json({ success: false, error: reason }).end();
           return;
@@ -233,8 +234,8 @@ function workspaceEndpoints(app) {
           message:
             failedToEmbed.length > 0
               ? `${failedToEmbed.length} documents failed to add.\n\n${errors
-                  .map((msg) => `${msg}`)
-                  .join("\n\n")}`
+                .map((msg) => `${msg}`)
+                .join("\n\n")}`
               : null,
         });
       } catch (e) {
@@ -781,11 +782,11 @@ function workspaceEndpoints(app) {
         // and is a valid thread slug.
         const threadId = !!threadSlug
           ? (
-              await WorkspaceThread.get({
-                slug: String(threadSlug),
-                workspace_id: workspace.id,
-              })
-            )?.id ?? null
+            await WorkspaceThread.get({
+              slug: String(threadSlug),
+              workspace_id: workspace.id,
+            })
+          )?.id ?? null
           : null;
         const chatsToFork = await WorkspaceChats.where(
           {

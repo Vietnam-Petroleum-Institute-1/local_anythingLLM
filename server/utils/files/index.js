@@ -1,18 +1,18 @@
 const fs = require("fs");
 const path = require("path");
 const { v5: uuidv5 } = require("uuid");
+const { Document } = require("../../models/documents");
 
 const { DocumentSyncQueue } = require("../../models/documentSyncQueue");
 const storageDir = process.env.STORAGE_DIR || "/default/storage/path";
 const documentsPath =
   process.env.NODE_ENV === "development"
     ? path.resolve(__dirname, `../../storage/documents`)
-    : path.resolve("Storage/", `documents`);
+    : path.resolve(process.env.STORAGE_DIR, `documents`);
 const vectorCachePath =
   process.env.NODE_ENV === "development"
     ? path.resolve(__dirname, `../../storage/vector-cache`)
-    // : path.resolve("home/nam/Projects/anything-llm/Storage/", `vector-cache`);
-    : path.resolve("Storage/", `vector-cache`);
+    : path.resolve(process.env.STORAGE_DIR, `vector-cache`);
 
 // Should take in a folder that is a subfolder of documents
 // eg: youtube-subject/video-123.json
@@ -28,6 +28,7 @@ async function fileData(filePath = null) {
 
 async function viewLocalFiles() {
   if (!fs.existsSync(documentsPath)) fs.mkdirSync(documentsPath);
+  
   const liveSyncAvailable = await DocumentSyncQueue.enabled();
   const directory = {
     name: "documents",
@@ -45,23 +46,23 @@ async function viewLocalFiles() {
         type: "folder",
         items: [],
       };
-      const subfiles = fs.readdirSync(folderPath);
-
+      const subfiles = fs.readdirSync(folderPath);      
       for (const subfile of subfiles) {
         if (path.extname(subfile) !== ".json") continue;
         const filePath = path.join(folderPath, subfile);
-        const rawData = fs.readFileSync(filePath, "utf8");
+        const rawData = fs.readFileSync(filePath, "utf8");        
         const cachefilename = `${file}/${subfile}`;
         const { pageContent, ...metadata } = JSON.parse(rawData);
         const pinnedInWorkspaces = await Document.getOnlyWorkspaceIds({
           docpath: cachefilename,
           pinned: true,
         });
+        console.log(pinnedInWorkspaces);
+        
         const watchedInWorkspaces = liveSyncAvailable
           ? await Document.getOnlyWorkspaceIds({
-              docpath: cachefilename,
-              watched: true,
-            })
+            docpath: cachefilename, watched: true,
+          })
           : [];
 
         subdocs.items.push({
@@ -216,7 +217,7 @@ function hasVectorCachedFiles() {
       fs.readdirSync(vectorCachePath)?.filter((name) => name.endsWith(".json"))
         .length !== 0
     );
-  } catch {}
+  } catch { }
   return false;
 }
 

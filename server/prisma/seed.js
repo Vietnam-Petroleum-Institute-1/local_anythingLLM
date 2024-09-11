@@ -22,6 +22,7 @@ async function main() {
     }
   }
 }
+
 async function testConnection() {
   try {
     const settings = await prisma.system_settings.findFirst();

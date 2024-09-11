@@ -15,9 +15,6 @@
     "lint": "yarn prettier --ignore-path ../.prettierignore --write ./endpoints ./models ./utils index.js",
     "swagger": "node ./swagger/init.js"
   },
-  "prisma": {
-    "seed": "node prisma/seed.js"
-  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.16.1",
     "@azure/openai": "1.0.0-beta.10",
