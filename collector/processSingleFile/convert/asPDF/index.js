@@ -7,11 +7,25 @@ const {
 const { tokenizeString } = require("../../../utils/tokenizer");
 const { default: slugify } = require("slugify");
 const PDFLoader = require("./PDFLoader");
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
+const fs = require('fs').promises;
+
+// Đường dẫn đến tệp Python
+const pythonScriptPath = '/home/manhleo/Code/local_anythingLLM/collector/python_ocr/main.py';
+const cudaPath = '/home/manhleo/Code/Learning_NLP/fcc-gpt-course/cuda/bin/python'
+const temp_file_path = `/home/manhleo/Code/local_anythingLLM/collector/storage/${v4()}.txt`;
+
+async function execCMD(cmd) {
+  const { stdout, stderr } = await exec(cmd);
+  return stdout;
+}
 
 async function asPdf({ fullFilePath = "", filename = "" }) {
   const pdfLoader = new PDFLoader(fullFilePath, {
     splitPages: true,
   });
+  console.log("Full File Path: " + fullFilePath);
 
   console.log(`-- Working ${filename} --`);
   const pageContent = [];
@@ -19,8 +33,7 @@ async function asPdf({ fullFilePath = "", filename = "" }) {
 
   for (const doc of docs) {
     console.log(
-      `-- Parsing content from pg ${
-        doc.metadata?.loc?.pageNumber || "unknown"
+      `-- Parsing content from pg ${doc.metadata?.loc?.pageNumber || "unknown"
       } --`
     );
     if (!doc.pageContent || !doc.pageContent.length) continue;
@@ -28,8 +41,30 @@ async function asPdf({ fullFilePath = "", filename = "" }) {
   }
 
   if (!pageContent.length) {
+
+    const stdout = await execCMD(`${cudaPath} ${pythonScriptPath} -i ${fullFilePath} -save ${temp_file_path}`);
+    // const { stdout, stderr } = await exec(`${cudaPath} ${pythonScriptPath} -i ${fullFilePath} -save ${temp_file_path}`);
+    // if (stderr) {
+    //   console.log("Loi nhe: ", stderr);
+    //   // console.error(`Resulting text content was empty for ${filename}.`);
+    //   trashFile(fullFilePath);
+    //   trashFile(temp_file_path);
+    //   return {
+    //     success: false,
+    //     reason: `No text content found in ${filename}.`,
+    //     documents: [],
+    //   };
+    // }
+    if (stdout) {
+      console.log(stdout);
+      pageContent.push(stdout);
+    }
+
+  }
+  if (pageContent[0] == '') {
     console.error(`Resulting text content was empty for ${filename}.`);
     trashFile(fullFilePath);
+    trashFile(temp_file_path);
     return {
       success: false,
       reason: `No text content found in ${filename}.`,
@@ -57,6 +92,7 @@ async function asPdf({ fullFilePath = "", filename = "" }) {
     `${slugify(filename)}-${data.id}`
   );
   trashFile(fullFilePath);
+  trashFile(temp_file_path);
   console.log(`[SUCCESS]: ${filename} converted & ready for embedding.\n`);
   return { success: true, reason: null, documents: [document] };
 }

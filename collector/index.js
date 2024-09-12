@@ -39,13 +39,12 @@ app.post(
   "/process",
   [verifyPayloadIntegrity],
   async function (request, response) {
-    console.log("AAAAAAAAAAAAAAAAAAA");
-
     const { filename, options = {} } = reqBody(request);
     try {
       const targetFilename = path
         .normalize(filename)
         .replace(/^(\.\.(\/|\\|$))+/, "");
+      console.log(targetFilename);
       const {
         success,
         reason,

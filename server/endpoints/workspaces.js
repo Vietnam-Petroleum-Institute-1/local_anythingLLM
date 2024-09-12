@@ -133,12 +133,11 @@ function workspaceEndpoints(app) {
         }
 
         const { success, reason } =
-          await Collector.processDocument(originalname);          
+          await Collector.processDocument(originalname);
         if (!success) {
           response.status(500).json({ success: false, error: reason }).end();
           return;
         }
-
         Collector.log(
           `Document ${originalname} uploaded processed and successfully. It is now available in documents.`
         );

@@ -15,6 +15,7 @@ const ACCEPTED_MIMES = {
   "application/vnd.oasis.opendocument.presentation": [".odp"],
 
   "application/pdf": [".pdf"],
+  "application/pdf": [".pdf"],
   "application/mbox": [".mbox"],
 
   "audio/wav": [".wav"],

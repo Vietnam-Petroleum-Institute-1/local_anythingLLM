@@ -7,6 +7,8 @@ class PDFLoader {
   }
 
   async load() {
+    console.log(this.filePath);
+    
     const buffer = await fs.readFile(this.filePath);
     const { getDocument, version } = await this.getPdfJS();
 

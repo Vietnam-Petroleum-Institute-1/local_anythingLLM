@@ -29,9 +29,7 @@ class CommunicationKey {
   // Note: The textData is typically the JSON stringified body sent to the document processor API.
   verify(signature = "", textData = "") {
     try {
-      let data = textData;
-      console.log("AAAAAAAA ", data);
-      
+      let data = textData;      
       if (typeof textData !== "string") data = JSON.stringify(data);
       return crypto.verify(
         "RSA-SHA256",
