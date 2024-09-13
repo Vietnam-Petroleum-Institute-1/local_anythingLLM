@@ -7,24 +7,25 @@ const {
 } = require("../../utils/files");
 const { tokenizeString } = require("../../utils/tokenizer");
 const { default: slugify } = require("slugify");
-const { exec } = require('child_process');
-const { promisify } = require("util");
-const execPromise = promisify(exec);
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
 
 // Đường dẫn đến tệp Python
 const pythonScriptPath = '/home/manhleo/Code/local_anythingLLM/collector/python_ocr/main.py';
 const cudaPath = '/home/manhleo/Code/Learning_NLP/fcc-gpt-course/cuda/bin/python'
+
+async function execCMD(cmd) {
+    const { stdout, stderr } = await exec(cmd);
+    return stdout;
+}
 
 async function asImage({ fullFilePath = "", filename = "" }) {
 
     console.log(`-- Working ${filename} --`);
     let pageContent = [];
     // Thực thi tệp Python
-    const { stdout, stderr } = await execPromise(`${cudaPath} ${pythonScriptPath} -i ${fullFilePath}`)
-    if (stderr) {
-        console.error(`stderr: ${stderr}`);
-        return;
-    }
+    const stdout = await execCMD(`${cudaPath} ${pythonScriptPath} -i ${fullFilePath}`);
+
     console.log(stdout);
     
     pageContent.push(stdout);

@@ -35,6 +35,9 @@ const SUPPORTED_FILETYPE_CONVERTERS = {
 
   ".html": "./convert/asTxt.js",
   ".pdf": "./convert/asPDF/index.js",
+  ".png": "./convert/asImage.js",
+  ".jpg": "./convert/asImage.js",
+  ".jpeg": "./convert/asImage.js",
 
   ".docx": "./convert/asDocx.js",
   ".pptx": "./convert/asOfficeMime.js",

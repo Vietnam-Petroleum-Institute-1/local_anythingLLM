@@ -9,12 +9,10 @@ const { default: slugify } = require("slugify");
 const PDFLoader = require("./PDFLoader");
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
-const fs = require('fs').promises;
 
 // Đường dẫn đến tệp Python
 const pythonScriptPath = '/home/manhleo/Code/local_anythingLLM/collector/python_ocr/main.py';
 const cudaPath = '/home/manhleo/Code/Learning_NLP/fcc-gpt-course/cuda/bin/python'
-const temp_file_path = `/home/manhleo/Code/local_anythingLLM/collector/storage/${v4()}.txt`;
 
 async function execCMD(cmd) {
   const { stdout, stderr } = await exec(cmd);
@@ -42,7 +40,7 @@ async function asPdf({ fullFilePath = "", filename = "" }) {
 
   if (!pageContent.length) {
 
-    const stdout = await execCMD(`${cudaPath} ${pythonScriptPath} -i ${fullFilePath} -save ${temp_file_path}`);
+    const stdout = await execCMD(`${cudaPath} ${pythonScriptPath} -i ${fullFilePath}`);
     // const { stdout, stderr } = await exec(`${cudaPath} ${pythonScriptPath} -i ${fullFilePath} -save ${temp_file_path}`);
     // if (stderr) {
     //   console.log("Loi nhe: ", stderr);
@@ -61,7 +59,9 @@ async function asPdf({ fullFilePath = "", filename = "" }) {
     }
 
   }
-  if (pageContent[0] == '') {
+
+  const content = pageContent.join("");
+  if (content.trim().length == 0) {
     console.error(`Resulting text content was empty for ${filename}.`);
     trashFile(fullFilePath);
     trashFile(temp_file_path);
@@ -71,8 +71,6 @@ async function asPdf({ fullFilePath = "", filename = "" }) {
       documents: [],
     };
   }
-
-  const content = pageContent.join("");
   const data = {
     id: v4(),
     url: "file://" + fullFilePath,

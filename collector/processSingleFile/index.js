@@ -47,7 +47,7 @@ async function processSingleFile(targetFilename, options = {}) {
   }
 
   let processFileAs = fileExtension;
-  if (!SUPPORTED_FILETYPE_CONVERTERS.hasOwnProperty(fileExtension)) {
+  if (!SUPPORTED_FILETYPE_CONVERTERS.hasOwnProperty(fileExtension)) {    
     if (isTextType(fullFilePath)) {
       console.log(
         `\x1b[33m[Collector]\x1b[0m The provided filetype of ${fileExtension} does not have a preset and will be processed as .txt.`

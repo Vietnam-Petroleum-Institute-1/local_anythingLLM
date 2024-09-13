@@ -21,7 +21,7 @@ import argparse
 import uuid
 
 ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--pdf", required=True, help="Đường dẫn đến pdf muốn nhận dạng")
+ap.add_argument("-i", "--file", required=True, help="Đường dẫn đến pdf muốn nhận dạng")
 ap.add_argument("-l", "--language", type=str, default="vie", help="Chọn ngôn ngữ")
 ap.add_argument("-save", "--save", type=str, default="", help="Lưu file txt")
 
@@ -35,8 +35,12 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 model.to(device)
 
 # let's load an example image
-file_path = args["pdf"]
-images = convert_from_path(file_path)
+file_path = args["file"]
+images = []
+if file_path.endswith(".pdf"):
+    images = convert_from_path(file_path)
+else:
+    images = [Image.open(file_path).convert("RGB")]
 
 new_file_paths = []
 # Process each image (page) as you would with Image.open()
@@ -479,6 +483,3 @@ if tables_crops:
 
         data = apply_ocr(cell_coordinates)
         print(str(data))
-        # f = open(args["save"], "w")
-        # f.write(str(data))
-        # f.close()
