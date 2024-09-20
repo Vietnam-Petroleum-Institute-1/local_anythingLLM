@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import SlashCommandsButton, {
   SlashCommands,
   useSlashCommands,
@@ -15,6 +15,13 @@ import SpeechToText from "./SpeechToText";
 import { Tooltip } from "react-tooltip";
 import AttachmentManager from "./Attachments";
 import AttachItem from "./AttachItem";
+import { GearSix, SquaresFour, UploadSimple } from "@phosphor-icons/react";
+import { Link, useMatch } from "react-router-dom";
+import paths from "@/utils/paths";
+import Workspace from "@/models/workspace";
+import ManageWorkspace, {
+  useManageWorkspaceModal,
+} from "../../../Modals/ManageWorkspace";
 
 export const PROMPT_INPUT_EVENT = "set_prompt_input";
 export default function PromptInput({
@@ -31,6 +38,10 @@ export default function PromptInput({
   const formRef = useRef(null);
   const textareaRef = useRef(null);
   const [_, setFocused] = useState(false);
+  const { showing, showModal, hideModal } = useManageWorkspaceModal();
+  const [selectedWs, setSelectedWs] = useState(null);
+  const [workspaces, setWorkspaces] = useState([]);
+  const [uploadHover, setUploadHover] = useState({});
 
   // To prevent too many re-renders we remotely listen for updates from the parent
   // via an event cycle. Otherwise, using message as a prop leads to a re-render every
@@ -38,6 +49,15 @@ export default function PromptInput({
   function handlePromptUpdate(e) {
     setPromptInput(e?.detail ?? "");
   }
+
+  useEffect(() => {
+    async function getWorkspaces() {
+      const workspaces = await Workspace.all();
+      setLoading(false);
+      setWorkspaces(workspaces);
+    }
+    getWorkspaces();
+  }, []);
 
   useEffect(() => {
     if (!!window)
@@ -52,6 +72,15 @@ export default function PromptInput({
     }
     resetTextAreaHeight();
   }, [inputDisabled]);
+
+  const handleUploadMouseEnter = useCallback((workspaceId) => {
+    setUploadHover((prev) => ({ ...prev, [workspaceId]: true }));
+    localStorage.setItem("workSpaceID", workspaceId);
+  }, []);
+
+  const handleUploadMouseLeave = useCallback((workspaceId) => {
+    setUploadHover((prev) => ({ ...prev, [workspaceId]: false }));
+  }, []);
 
   const handleSubmit = (e) => {
     setFocused(false);
@@ -172,9 +201,39 @@ export default function PromptInput({
                   setShowAgents={setShowAgents}
                 />
                 <TextSizeButton />
-              </div>
-              <div className="flex gap-x-2">
                 <SpeechToText sendCommand={sendCommand} />
+                <div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedWs(localStorage.getItem("workspace"));
+                      showModal();
+                    }}
+                    onMouseEnter={() =>
+                      handleUploadMouseEnter(
+                        localStorage.getItem("workspace").id
+                      )
+                    }
+                    onMouseLeave={() =>
+                      handleUploadMouseLeave(
+                        localStorage.getItem("workspace").id
+                      )
+                    }
+                    className="rounded-md flex items-center justify-center ml-auto"
+                  >
+                    <UploadSimple
+                      className="h-[20px] w-[20px] text-[#FFCB02]"
+                      weight="bold"
+                    />
+                  </button>
+                  {showing && (
+                    <ManageWorkspace
+                      hideModal={hideModal}
+                      providedSlug={selectedWs ? selectedWs.slug : null}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>

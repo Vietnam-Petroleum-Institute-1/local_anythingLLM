@@ -61,7 +61,7 @@ export default function Sidebar() {
                 <ActiveWorkspaces />
               </div>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 pt-4 pb-3 rounded-b-[16px] bg-[#012241] bg-opacity-80 backdrop-filter backdrop-blur-md z-10">
+            <div className="absolute bottom-0 left-0 right-0 pt-4 pb-3 rounded-b-[16px] bg-[#012241] bg-opacity-80 backdrop-filter backdrop-blur-md z-5">
               <Footer />
             </div>
           </div>

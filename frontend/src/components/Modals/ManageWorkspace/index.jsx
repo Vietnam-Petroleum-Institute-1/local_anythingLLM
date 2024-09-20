@@ -101,7 +101,7 @@ export default memo(ManageWorkspace);
 
 const ModalTabSwitcher = ({ selectedTab, setSelectedTab }) => {
   return (
-    <div className="w-full flex justify-center z-10 relative">
+    <div className="w-full flex justify-center z-20 relative">
       <div className="gap-x-2 flex justify-center -mt-[68px] mb-10 bg-sidebar-button p-1 rounded-xl shadow border-2 border-slate-300/10 w-fit">
         <button
           onClick={() => setSelectedTab("documents")}
