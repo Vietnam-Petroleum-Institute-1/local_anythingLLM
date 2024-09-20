@@ -222,7 +222,10 @@ export default function PromptInput({
                     }
                     className="rounded-md flex items-center justify-center ml-auto"
                   >
-                    <UploadSimple className="h-[20px] w-[20px]" weight="bold" />
+                    <UploadSimple
+                      className="h-[20px] w-[20px] text-[#FFCB02]"
+                      weight="bold"
+                    />
                   </button>
                   {showing && (
                     <ManageWorkspace
