@@ -35,7 +35,6 @@ export default function ActiveWorkspaces() {
   }, []);
   const handleMouseEnter = useCallback((workspaceId, workspace) => {
     setHoverStates((prev) => ({ ...prev, [workspaceId]: true }));
-    localStorage.setItem("workspace", workspace);
     console.log("workspace", workspace);
   }, []);
 
@@ -129,6 +128,7 @@ export default function ActiveWorkspaces() {
                           type="button"
                           onClick={(e) => {
                             e.preventDefault();
+                            localStorage.setItem("workspace", workspace);
                             setSelectedWs(workspace);
                             showModal();
                           }}

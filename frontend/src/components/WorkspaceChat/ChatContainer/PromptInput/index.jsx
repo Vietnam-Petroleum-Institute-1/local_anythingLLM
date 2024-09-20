@@ -22,6 +22,7 @@ import Workspace from "@/models/workspace";
 import ManageWorkspace, {
   useManageWorkspaceModal,
 } from "../../../Modals/ManageWorkspace";
+import AttachItemWorkSpace from "./AttachItemWorkSpace";
 
 export const PROMPT_INPUT_EVENT = "set_prompt_input";
 export default function PromptInput({
@@ -202,38 +203,7 @@ export default function PromptInput({
                 />
                 <TextSizeButton />
                 <SpeechToText sendCommand={sendCommand} />
-                <div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setSelectedWs(localStorage.getItem("workspace"));
-                      showModal();
-                    }}
-                    onMouseEnter={() =>
-                      handleUploadMouseEnter(
-                        localStorage.getItem("workspace").id
-                      )
-                    }
-                    onMouseLeave={() =>
-                      handleUploadMouseLeave(
-                        localStorage.getItem("workspace").id
-                      )
-                    }
-                    className="rounded-md flex items-center justify-center ml-auto"
-                  >
-                    <UploadSimple
-                      className="h-[20px] w-[20px] text-[#FFCB02]"
-                      weight="bold"
-                    />
-                  </button>
-                  {showing && (
-                    <ManageWorkspace
-                      hideModal={hideModal}
-                      providedSlug={selectedWs ? selectedWs.slug : null}
-                    />
-                  )}
-                </div>
+                <AttachItemWorkSpace />
               </div>
             </div>
           </div>
