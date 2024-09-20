@@ -74,6 +74,8 @@ function systemEndpoints(app) {
 
   app.get("/setup-complete", async (_, response) => {
     try {
+      console.log("setup-complete");
+      
       const results = await SystemSettings.currentSettings();
       response.status(200).json({ results });
     } catch (e) {

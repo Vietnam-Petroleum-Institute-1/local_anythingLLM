@@ -53,12 +53,6 @@ for i, image in enumerate(images):
     image_rgb.save(file_name, "PNG")
     new_file_paths.append(file_name)
 
-image = Image.open(new_file_paths[0]).convert("RGB")
-# After processing, remove the files to free up memory
-for file_path in new_file_paths:
-    os.remove(file_path)
-
-
 class MaxResize(object):
     def __init__(self, max_size=800):
         self.max_size = max_size
@@ -81,12 +75,6 @@ detection_transform = transforms.Compose(
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ]
 )
-pixel_values = detection_transform(image).unsqueeze(0)
-pixel_values = pixel_values.to(device)
-
-with torch.no_grad():
-    outputs = model(pixel_values)
-
 
 def box_cxcywh_to_xyxy(x):
     x_c, y_c, w, h = x.unbind(-1)
@@ -126,9 +114,6 @@ def outputs_to_objects(outputs, img_size, id2label):
             )
 
     return objects
-
-
-objects = outputs_to_objects(outputs, image.size, id2label)
 
 
 def fig2img(fig):
@@ -236,10 +221,6 @@ def visualize_detected_tables(img, det_tables, out_path=None):
     return fig
 
 
-fig = visualize_detected_tables(image, objects)
-visualized_image = fig2img(fig)
-
-
 def objects_to_crops(img, tokens, objects, class_thresholds, padding=10):
     """
     Process the bounding boxes produced by the table detection model into
@@ -292,194 +273,207 @@ def objects_to_crops(img, tokens, objects, class_thresholds, padding=10):
 
     return table_crops
 
+for path in new_file_paths:
+    image = Image.open(path).convert("RGB")
 
-tokens = []
-detection_class_thresholds = {"table": 0.5, "table rotated": 0.5, "no object": 10}
-crop_padding = 0
+    pixel_values = detection_transform(image).unsqueeze(0)
+    pixel_values = pixel_values.to(device)
 
-tables_crops = objects_to_crops(
-    image, tokens, objects, detection_class_thresholds, padding=0
-)
-if tables_crops:
-    for table in tables_crops:
-        cropped_table = table["image"].convert("RGB")
-        cropped_table.save("table.jpg")
-        # Tạo đối tượng Super Resolution
-        sr = cv2.dnn_superres.DnnSuperResImpl_create()
+    with torch.no_grad():
+        outputs = model(pixel_values)
 
-        path = "/home/manhleo/Code/local_anythingLLM/collector/python_ocr/ESPCN_x2.pb"
-        sr.readModel(path)
+    objects = outputs_to_objects(outputs, image.size, id2label)
 
-        sr.setModel("espcn", 2)
+    fig = visualize_detected_tables(image, objects)
+    visualized_image = fig2img(fig)
+    tokens = []
+    detection_class_thresholds = {"table": 0.5, "table rotated": 0.5, "no object": 10}
+    crop_padding = 0
 
-        img = cv2.imread("table.jpg")
+    tables_crops = objects_to_crops(
+        image, tokens, objects, detection_class_thresholds, padding=0
+    )
+    if tables_crops:
+        for table in tables_crops:
+            cropped_table = table["image"].convert("RGB")
+            cropped_table.save("table.jpg")
+            # Tạo đối tượng Super Resolution
+            sr = cv2.dnn_superres.DnnSuperResImpl_create()
 
-        # Áp dụng super resolution
-        result = sr.upsample(img)
+            path = "/Users/phamduyphuong/local_anythingLLM/collector/python_ocr/ESPCN_x2.pb"
+            sr.readModel(path)
 
-        cropped_table = Image.fromarray(result)
+            sr.setModel("espcn", 2)
 
-        # new v1.1 checkpoints require no timm anymore
-        structure_model = TableTransformerForObjectDetection.from_pretrained(
-            "microsoft/table-structure-recognition-v1.1-all"
-        )
-        structure_model.to(device)
-        structure_transform = transforms.Compose(
-            [
-                MaxResize(1000),
-                transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            ]
-        )
-        pixel_values = structure_transform(cropped_table).unsqueeze(0)
-        pixel_values = pixel_values.to(device)
+            img = cv2.imread("table.jpg")
 
-        # forward pass
-        with torch.no_grad():
-            outputs = structure_model(pixel_values)
-        # update id2label to include "no object"
-        structure_id2label = structure_model.config.id2label
-        structure_id2label[len(structure_id2label)] = "no object"
+            # Áp dụng super resolution
+            result = sr.upsample(img)
 
-        cells = outputs_to_objects(outputs, cropped_table.size, structure_id2label)
-        cropped_table_visualized = cropped_table.copy()
-        draw = ImageDraw.Draw(cropped_table_visualized)
+            cropped_table = Image.fromarray(result)
 
-        for cell in cells:
-            draw.rectangle(cell["bbox"], outline="red")
+            # new v1.1 checkpoints require no timm anymore
+            structure_model = TableTransformerForObjectDetection.from_pretrained(
+                "microsoft/table-structure-recognition-v1.1-all"
+            )
+            structure_model.to(device)
+            structure_transform = transforms.Compose(
+                [
+                    MaxResize(1000),
+                    transforms.ToTensor(),
+                    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                ]
+            )
+            pixel_values = structure_transform(cropped_table).unsqueeze(0)
+            pixel_values = pixel_values.to(device)
 
-        def plot_results(cells, class_to_visualize):
-            if class_to_visualize not in structure_model.config.id2label.values():
-                raise ValueError("Class should be one of the available classes")
+            # forward pass
+            with torch.no_grad():
+                outputs = structure_model(pixel_values)
+            # update id2label to include "no object"
+            structure_id2label = structure_model.config.id2label
+            structure_id2label[len(structure_id2label)] = "no object"
 
-            plt.figure(figsize=(16, 10))
-            plt.imshow(cropped_table)
-            ax = plt.gca()
+            cells = outputs_to_objects(outputs, cropped_table.size, structure_id2label)
+            cropped_table_visualized = cropped_table.copy()
+            draw = ImageDraw.Draw(cropped_table_visualized)
 
             for cell in cells:
-                score = cell["score"]
-                bbox = cell["bbox"]
-                label = cell["label"]
+                draw.rectangle(cell["bbox"], outline="red")
 
-                if label == class_to_visualize:
-                    xmin, ymin, xmax, ymax = tuple(bbox)
+            def plot_results(cells, class_to_visualize):
+                if class_to_visualize not in structure_model.config.id2label.values():
+                    raise ValueError("Class should be one of the available classes")
 
-                    ax.add_patch(
-                        plt.Rectangle(
-                            (xmin, ymin),
-                            xmax - xmin,
-                            ymax - ymin,
-                            fill=False,
-                            color="red",
-                            linewidth=3,
+                plt.figure(figsize=(16, 10))
+                plt.imshow(cropped_table)
+                ax = plt.gca()
+
+                for cell in cells:
+                    score = cell["score"]
+                    bbox = cell["bbox"]
+                    label = cell["label"]
+
+                    if label == class_to_visualize:
+                        xmin, ymin, xmax, ymax = tuple(bbox)
+
+                        ax.add_patch(
+                            plt.Rectangle(
+                                (xmin, ymin),
+                                xmax - xmin,
+                                ymax - ymin,
+                                fill=False,
+                                color="red",
+                                linewidth=3,
+                            )
                         )
-                    )
-                    text = f'{cell["label"]}: {score:0.2f}'
-                    ax.text(
-                        xmin,
-                        ymin,
-                        text,
-                        fontsize=15,
-                        bbox=dict(facecolor="yellow", alpha=0.5),
-                    )
-                    plt.axis("off")
+                        text = f'{cell["label"]}: {score:0.2f}'
+                        ax.text(
+                            xmin,
+                            ymin,
+                            text,
+                            fontsize=15,
+                            bbox=dict(facecolor="yellow", alpha=0.5),
+                        )
+                        plt.axis("off")
 
-        plot_results(cells, class_to_visualize="table row")
+            plot_results(cells, class_to_visualize="table row")
 
-        def get_cell_coordinates_by_row(table_data):
-            # Extract rows and columns
-            rows = [entry for entry in table_data if entry["label"] == "table row"]
-            columns = [
-                entry for entry in table_data if entry["label"] == "table column"
-            ]
-
-            # Sort rows and columns by their Y and X coordinates, respectively
-            rows.sort(key=lambda x: x["bbox"][1])
-            columns.sort(key=lambda x: x["bbox"][0])
-
-            # Function to find cell coordinates
-            def find_cell_coordinates(row, column):
-                cell_bbox = [
-                    column["bbox"][0],
-                    row["bbox"][1],
-                    column["bbox"][2],
-                    row["bbox"][3],
+            def get_cell_coordinates_by_row(table_data):
+                # Extract rows and columns
+                rows = [entry for entry in table_data if entry["label"] == "table row"]
+                columns = [
+                    entry for entry in table_data if entry["label"] == "table column"
                 ]
-                return cell_bbox
 
-            # Generate cell coordinates and count cells in each row
-            cell_coordinates = []
+                # Sort rows and columns by their Y and X coordinates, respectively
+                rows.sort(key=lambda x: x["bbox"][1])
+                columns.sort(key=lambda x: x["bbox"][0])
 
-            for row in rows:
-                row_cells = []
-                for column in columns:
-                    cell_bbox = find_cell_coordinates(row, column)
-                    row_cells.append({"column": column["bbox"], "cell": cell_bbox})
-
-                # Sort cells in the row by X coordinate
-                row_cells.sort(key=lambda x: x["column"][0])
-
-                # Append row information to cell_coordinates
-                cell_coordinates.append(
-                    {
-                        "row": row["bbox"],
-                        "cells": row_cells,
-                        "cell_count": len(row_cells),
-                    }
-                )
-
-            # Sort rows from top to bottom
-            cell_coordinates.sort(key=lambda x: x["row"][1])
-
-            return cell_coordinates
-
-        cell_coordinates = get_cell_coordinates_by_row(cells)
-
-        def apply_ocr(cell_coordinates):
-            # let's OCR row by row
-            data = dict()
-            max_num_columns = 0
-            for idx, row in enumerate(tqdm(cell_coordinates)):
-                row_text = []
-                for cell in row["cells"]:
-                    # crop cell out of image
-                    cell_image = np.array(cropped_table.crop(cell["cell"]))
-                    height, width = cell_image.shape[0], cell_image.shape[1]
-                    # scale = 2000 / width
-                    # img = cv2.resize(cell_image, (0, 0), fx=scale, fy=scale)
-                    gray = cv2.cvtColor(np.array(cell_image), cv2.COLOR_BGR2GRAY)
-
-                    # Ghi tạm ảnh xuống ổ cứng để sau đó apply OCR
-                    filename = "{}.png".format(os.getpid())
-                    cv2.imwrite(filename, gray)
-
-                    config = r"--oem 3 --psm 6"
-                    result = pytesseract.image_to_string(
-                        Image.open(filename), lang="eng", config=config
-                    )
-                    # Xóa ảnh tạm sau khi nhận dạng
-                    os.remove(filename)
-
-                    if len(result) > 0:
-                        row_text.append(result)
-                    else:
-                        row_text.append("Nan")
-
-                if len(row_text) > max_num_columns:
-                    max_num_columns = len(row_text)
-
-                data[idx] = row_text
-
-            # pad rows which don't have max_num_columns elements
-            # to make sure all rows have the same number of columns
-            for row, row_data in data.copy().items():
-                if len(row_data) != max_num_columns:
-                    row_data = row_data + [
-                        "" for _ in range(max_num_columns - len(row_data))
+                # Function to find cell coordinates
+                def find_cell_coordinates(row, column):
+                    cell_bbox = [
+                        column["bbox"][0],
+                        row["bbox"][1],
+                        column["bbox"][2],
+                        row["bbox"][3],
                     ]
-                data[row] = row_data
+                    return cell_bbox
 
-            return data
+                # Generate cell coordinates and count cells in each row
+                cell_coordinates = []
 
-        data = apply_ocr(cell_coordinates)
-        print(str(data))
+                for row in rows:
+                    row_cells = []
+                    for column in columns:
+                        cell_bbox = find_cell_coordinates(row, column)
+                        row_cells.append({"column": column["bbox"], "cell": cell_bbox})
+
+                    # Sort cells in the row by X coordinate
+                    row_cells.sort(key=lambda x: x["column"][0])
+
+                    # Append row information to cell_coordinates
+                    cell_coordinates.append(
+                        {
+                            "row": row["bbox"],
+                            "cells": row_cells,
+                            "cell_count": len(row_cells),
+                        }
+                    )
+
+                # Sort rows from top to bottom
+                cell_coordinates.sort(key=lambda x: x["row"][1])
+
+                return cell_coordinates
+
+            cell_coordinates = get_cell_coordinates_by_row(cells)
+
+            def apply_ocr(cell_coordinates):
+                # let's OCR row by row
+                data = dict()
+                max_num_columns = 0
+                for idx, row in enumerate(tqdm(cell_coordinates)):
+                    row_text = []
+                    for cell in row["cells"]:
+                        # crop cell out of image
+                        cell_image = np.array(cropped_table.crop(cell["cell"]))
+                        height, width = cell_image.shape[0], cell_image.shape[1]
+                        # scale = 2000 / width
+                        # img = cv2.resize(cell_image, (0, 0), fx=scale, fy=scale)
+                        gray = cv2.cvtColor(np.array(cell_image), cv2.COLOR_BGR2GRAY)
+
+                        # Ghi tạm ảnh xuống ổ cứng để sau đó apply OCR
+                        filename = "{}.png".format(os.getpid())
+                        cv2.imwrite(filename, gray)
+
+                        config = r"--oem 3 --psm 6"
+                        result = pytesseract.image_to_string(
+                            Image.open(filename), lang="vie", config=config
+                        )
+                        # Xóa ảnh tạm sau khi nhận dạng
+                        os.remove(filename)
+
+                        if len(result) > 0:
+                            row_text.append(result)
+                        else:
+                            row_text.append("Nan")
+
+                    if len(row_text) > max_num_columns:
+                        max_num_columns = len(row_text)
+
+                    data[idx] = row_text
+
+                # pad rows which don't have max_num_columns elements
+                # to make sure all rows have the same number of columns
+                for row, row_data in data.copy().items():
+                    if len(row_data) != max_num_columns:
+                        row_data = row_data + [
+                            "" for _ in range(max_num_columns - len(row_data))
+                        ]
+                    data[row] = row_data
+
+                return data
+
+            data = apply_ocr(cell_coordinates)
+            print(str(data))
+            os.remove(path)

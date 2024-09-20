@@ -12,6 +12,8 @@ async function asTxt({ fullFilePath = "", filename = "" }) {
   let content = "";
   try {
     content = fs.readFileSync(fullFilePath, "utf8");
+    console.log(content);
+
   } catch (err) {
     console.error("Could not read file!", err);
   }

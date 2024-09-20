@@ -946,6 +946,86 @@ function workspaceEndpoints(app) {
     }
   );
 
+  /** Dify */
+  app.post(
+    "/workspace/:slug/upload-and-embed-2",
+    [
+      validatedRequest,
+      flexUserRoleValid([ROLES.admin, ROLES.manager]),
+      handleFileUpload,
+    ],
+    async function (request, response) {
+      try {
+        const { slug = null } = request.params;
+        const user = await userFromSession(request, response);
+        const currWorkspace = multiUserMode(response)
+          ? await Workspace.getWithUser(user, { slug })
+          : await Workspace.get({ slug });
+
+        if (!currWorkspace) {
+          response.sendStatus(400).end();
+          return;
+        }
+
+        const Collector = new CollectorApi();
+        const { originalname } = request.file;
+        const processingOnline = await Collector.online();
+
+        if (!processingOnline) {
+          response
+            .status(500)
+            .json({
+              success: false,
+              error: `Document processing API is not online. Document ${originalname} will not be processed automatically.`,
+            })
+            .end();
+          return;
+        }
+
+        const { success, reason, documents } =
+          await Collector.processDocument2(originalname);
+        if (!success || documents?.length === 0) {
+          response.status(500).json({ success: false, error: reason }).end();
+          return;
+        }
+
+        const data = {
+          "segments": [
+            {
+              "content": JSON.stringify(documents),
+              "answer": "1",
+              "keywords": [
+                "a"
+              ]
+            }
+          ]
+        }
+
+        const res = await fetch("http://103.75.180.47/v1/datasets/18cb9306-32e8-487a-993c-586b2c563cc3/documents/59abce73-608a-459c-a47d-0d9276ea6b83/segments", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer dataset-oB18KobCvufR8Gf0YjlKW9Ms",
+            "content-type": "application/json"
+          },
+          body: JSON.stringify(data),
+        })
+
+        if (!res.ok) throw new Error("Response could not be completed");
+        const result = await res.json();
+
+        response.status(200).json({
+          success: true,
+          error: null,
+          document: documents,
+          dify: result
+        });
+      } catch (e) {
+        console.error(e.message, e);
+        response.sendStatus(500).end();
+      }
+    }
+  );
+
   app.delete(
     "/workspace/:slug/remove-and-unembed",
     [

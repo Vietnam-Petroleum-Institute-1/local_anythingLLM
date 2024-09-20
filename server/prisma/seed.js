@@ -6,7 +6,7 @@ async function main() {
     { label: "multi_user_mode", value: "false" },
     { label: "limit_user_messages", value: "false" },
     { label: "message_limit", value: "25" },
-    { label: "logo_filename", value: "anything-llm.png" },
+    { label: "logo_filename", value: "vpi.png" },
   ];
 
   for (let setting of settings) {

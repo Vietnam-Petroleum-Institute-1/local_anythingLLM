@@ -9,3 +9,10 @@ v-env
 aws_cf_deploy_anything_llm.json
 yarn.lock
 *.bak
+collector/python_ocr/cuda/
+collector/table.jpg
+server/prisma/migrations/migration_lock.toml
+server/prisma/migrations/20240914015102_init/migration.sql
+collector/python_ocr/vpi1.pdf
+collector/python_ocr/table.jpg
+collector/table.jpg

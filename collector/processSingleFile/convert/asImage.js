@@ -11,8 +11,8 @@ const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
 // Đường dẫn đến tệp Python
-const pythonScriptPath = '/home/manhleo/Code/local_anythingLLM/collector/python_ocr/main.py';
-const cudaPath = '/home/manhleo/Code/Learning_NLP/fcc-gpt-course/cuda/bin/python'
+const pythonScriptPath = '/Users/phamduyphuong/local_anythingLLM/collector/python_ocr/main.py';
+const cudaPath = '/Users/phamduyphuong/local_anythingLLM/collector/python_ocr/cuda/bin/python'
 
 async function execCMD(cmd) {
     const { stdout, stderr } = await exec(cmd);

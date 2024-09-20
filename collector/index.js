@@ -9,7 +9,7 @@ const cors = require("cors");
 const path = require("path");
 const { ACCEPTED_MIMES } = require("./utils/constants");
 const { reqBody } = require("./utils/http");
-const { processSingleFile } = require("./processSingleFile");
+const { processSingleFile, processSingleFile2 } = require("./processSingleFile");
 const { processLink, getLinkText } = require("./processLink");
 const { wipeCollectorStorage } = require("./utils/files");
 const extensions = require("./extensions");
@@ -18,9 +18,9 @@ const { verifyPayloadIntegrity } = require("./middleware/verifyIntegrity");
 const app = express();
 
 app.use(cors({ origin: '*', credentials: true, }));
-// app.use(bodyParser.urlencoded({
-//   extended: false
-// }));
+app.use(bodyParser.urlencoded({
+  extended: false
+}));
 app.use(bodyParser.json());
 app.use((err, req, res, next) => {
   if (err) {
@@ -50,6 +50,37 @@ app.post(
         reason,
         documents = [],
       } = await processSingleFile(targetFilename, options);
+      response
+        .status(200)
+        .json({ filename: targetFilename, success, reason, documents });
+    } catch (e) {
+      console.error(e);
+      response.status(200).json({
+        filename: filename,
+        success: false,
+        reason: "A processing error occurred.",
+        documents: [],
+      });
+    }
+    return;
+  }
+);
+
+app.post(
+  "/process-2",
+  [verifyPayloadIntegrity],
+  async function (request, response) {
+    const { filename, options = {} } = reqBody(request);
+    try {
+      const targetFilename = path
+        .normalize(filename)
+        .replace(/^(\.\.(\/|\\|$))+/, "");
+      console.log("Manh leo dify");
+      const {
+        success,
+        reason,
+        documents = [],
+      } = await processSingleFile2(targetFilename, options);
       response
         .status(200)
         .json({ filename: targetFilename, success, reason, documents });

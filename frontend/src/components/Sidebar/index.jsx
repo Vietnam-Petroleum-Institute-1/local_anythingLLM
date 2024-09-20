@@ -12,7 +12,6 @@ import SettingsButton from "../SettingsButton";
 import { Link } from "react-router-dom";
 import paths from "@/utils/paths";
 import { useTranslation } from "react-i18next";
-// import logogVPI from "../../../public/logoVPI.png";
 
 export default function Sidebar() {
   const { user } = useUser();

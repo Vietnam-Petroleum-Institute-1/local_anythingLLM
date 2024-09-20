@@ -11,8 +11,8 @@ const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
 // Đường dẫn đến tệp Python
-const pythonScriptPath = '/home/manhleo/Code/local_anythingLLM/collector/python_ocr/main.py';
-const cudaPath = '/home/manhleo/Code/Learning_NLP/fcc-gpt-course/cuda/bin/python'
+const pythonScriptPath = '/Users/phamduyphuong/local_anythingLLM/collector/python_ocr/main.py';
+const cudaPath = '/Users/phamduyphuong/local_anythingLLM/collector/python_ocr/cuda/bin/python'
 
 async function execCMD(cmd) {
   const { stdout, stderr } = await exec(cmd);
@@ -41,18 +41,6 @@ async function asPdf({ fullFilePath = "", filename = "" }) {
   if (!pageContent.length) {
 
     const stdout = await execCMD(`${cudaPath} ${pythonScriptPath} -i ${fullFilePath}`);
-    // const { stdout, stderr } = await exec(`${cudaPath} ${pythonScriptPath} -i ${fullFilePath} -save ${temp_file_path}`);
-    // if (stderr) {
-    //   console.log("Loi nhe: ", stderr);
-    //   // console.error(`Resulting text content was empty for ${filename}.`);
-    //   trashFile(fullFilePath);
-    //   trashFile(temp_file_path);
-    //   return {
-    //     success: false,
-    //     reason: `No text content found in ${filename}.`,
-    //     documents: [],
-    //   };
-    // }
     if (stdout) {
       console.log(stdout);
       pageContent.push(stdout);
@@ -64,7 +52,6 @@ async function asPdf({ fullFilePath = "", filename = "" }) {
   if (content.trim().length == 0) {
     console.error(`Resulting text content was empty for ${filename}.`);
     trashFile(fullFilePath);
-    trashFile(temp_file_path);
     return {
       success: false,
       reason: `No text content found in ${filename}.`,
@@ -90,7 +77,6 @@ async function asPdf({ fullFilePath = "", filename = "" }) {
     `${slugify(filename)}-${data.id}`
   );
   trashFile(fullFilePath);
-  trashFile(temp_file_path);
   console.log(`[SUCCESS]: ${filename} converted & ready for embedding.\n`);
   return { success: true, reason: null, documents: [document] };
 }
