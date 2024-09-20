@@ -14,8 +14,7 @@ export default function AttachItem() {
 
   // Function to upload the file
   const handleFileUpload = async (file) => {
-    // const API_BASE = process.env.VITE_API_BASE || "";
-    const API_BASE = "http://localhost:3001"; // Your API base URL
+    const API_BASE = process.env.VITE_API_BASE || "";
     const slug = "your-workspace-slug"; // Update this with the actual workspace slug
     const url = `${API_BASE}/workspace/${slug}/upload-and-embed-2`;
 
