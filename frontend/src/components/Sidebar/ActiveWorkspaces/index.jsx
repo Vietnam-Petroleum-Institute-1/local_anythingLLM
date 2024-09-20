@@ -33,8 +33,10 @@ export default function ActiveWorkspaces() {
     }
     getWorkspaces();
   }, []);
-  const handleMouseEnter = useCallback((workspaceId) => {
+  const handleMouseEnter = useCallback((workspaceId, workspace) => {
     setHoverStates((prev) => ({ ...prev, [workspaceId]: true }));
+    localStorage.setItem("workspace", workspace);
+    console.log("workspace", workspace);
   }, []);
 
   const handleMouseLeave = useCallback((workspaceId) => {
@@ -50,6 +52,7 @@ export default function ActiveWorkspaces() {
 
   const handleUploadMouseEnter = useCallback((workspaceId) => {
     setUploadHover((prev) => ({ ...prev, [workspaceId]: true }));
+    localStorage.setItem("workSpaceID", workspaceId);
   }, []);
 
   const handleUploadMouseLeave = useCallback((workspaceId) => {
@@ -79,7 +82,7 @@ export default function ActiveWorkspaces() {
         return (
           <div
             className="flex flex-col w-full"
-            onMouseEnter={() => handleMouseEnter(workspace.id)}
+            onMouseEnter={() => handleMouseEnter(workspace.id, workspace)}
             onMouseLeave={() => handleMouseLeave(workspace.id)}
             key={workspace.id}
             role="listitem"
@@ -138,7 +141,7 @@ export default function ActiveWorkspaces() {
                           className="rounded-md flex items-center justify-center ml-auto"
                         >
                           <UploadSimple
-                            className="h-[20px] w-[20px]"
+                            className="h-[20px] w-[20px] text-[#FFCB02]"
                             weight="bold"
                           />
                         </button>
