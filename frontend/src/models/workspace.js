@@ -131,75 +131,222 @@ const Workspace = {
       attachments
     );
   },
-  streamChat: async function ({ slug }, message, handleChat, attachments = []) {
-    const ctrl = new AbortController();
 
-    // Listen for the ABORT_STREAM_EVENT key to be emitted by the client
-    // to early abort the streaming response. On abort we send a special `stopGeneration`
-    // event to be handled which resets the UI for us to be able to send another message.
-    // The backend response abort handling is done in each LLM's handleStreamResponse.
-    window.addEventListener(ABORT_STREAM_EVENT, () => {
-      ctrl.abort();
-      handleChat({ id: v4(), type: "stopGeneration" });
-    });
+  // ================================================================================
+  // Hàm gốc
 
-    await fetchEventSource(`${API_BASE}/workspace/${slug}/stream-chat`, {
+  // streamChat: async function ({ slug }, message, handleChat, attachments = []) {
+  //   const ctrl = new AbortController();
+
+  //   // Listen for the ABORT_STREAM_EVENT key to be emitted by the client
+  //   // to early abort the streaming response. On abort we send a special `stopGeneration`
+  //   // event to be handled which resets the UI for us to be able to send another message.
+  //   // The backend response abort handling is done in each LLM's handleStreamResponse.
+  //   window.addEventListener(ABORT_STREAM_EVENT, () => {
+  //     ctrl.abort();
+  //     handleChat({ id: v4(), type: "stopGeneration" });
+  //   });
+
+  //   await fetchEventSource(`${API_BASE}/workspace/${slug}/stream-chat`, {
+  //     method: "POST",
+  //     body: JSON.stringify({ message, attachments }),
+  //     headers: baseHeaders(),
+  //     signal: ctrl.signal,
+  //     openWhenHidden: true,
+  //     async onopen(response) {
+  //       if (response.ok) {
+  //         return; // everything's good
+  //       } else if (
+  //         response.status >= 400 &&
+  //         response.status < 500 &&
+  //         response.status !== 429
+  //       ) {
+  //         handleChat({
+  //           id: v4(),
+  //           type: "abort",
+  //           textResponse: null,
+  //           sources: [],
+  //           close: true,
+  //           error: `An error occurred while streaming response. Code ${response.status}`,
+  //         });
+  //         ctrl.abort();
+  //         throw new Error("Invalid Status code response.");
+  //       } else {
+  //         handleChat({
+  //           id: v4(),
+  //           type: "abort",
+  //           textResponse: null,
+  //           sources: [],
+  //           close: true,
+  //           error: `An error occurred while streaming response. Unknown Error.`,
+  //         });
+  //         ctrl.abort();
+  //         throw new Error("Unknown error");
+  //       }
+  //     },
+  //     async onmessage(msg) {
+  //       try {
+  //         const chatResult = JSON.parse(msg.data);
+  //         handleChat(chatResult);
+  //       } catch {}
+  //     },
+  //     onerror(err) {
+  //       handleChat({
+  //         id: v4(),
+  //         type: "abort",
+  //         textResponse: null,
+  //         sources: [],
+  //         close: true,
+  //         error: `An error occurred while streaming response. ${err.message}`,
+  //       });
+  //       ctrl.abort();
+  //       throw new Error();
+  //     },
+  //   });
+  // },
+
+// ================================================================================
+
+// Chạy được, trả ra kết quả được nhưng không render lên Chatbox được
+
+// streamChat: async function ({ slug }, message, handleChat, attachments = []) {
+//   const ctrl = new AbortController();
+
+//   console.log(`[streamChat] Starting stream with slug: "${slug}", message: "${message}"`);
+
+//   // Nghe sự kiện ABORT_STREAM_EVENT để hủy bỏ phản hồi streaming
+//   window.addEventListener(ABORT_STREAM_EVENT, () => {
+//     ctrl.abort();
+//     handleChat({ id: v4(), type: "stopGeneration" }); // Sử dụng v4() để tạo UUID
+//     console.log('[streamChat] Streaming aborted by user.');
+//   });
+
+//   try {
+//     // Định nghĩa trực tiếp các headers, bao gồm cả Content-Type: application/json
+//     const headers = {
+//       'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJuaHVhbmhkdWMiLCJpYXQiOjE3MjY5OTcxMzEsImV4cCI6MTcyOTU4OTEzMX0.54odmvBqFl-fKOy7Ksmt9JkO1zqnxQoBJuRsK4ONtSo',
+//       'Content-Type': 'application/json',
+//       // Thêm các headers khác nếu cần
+//     };
+//     console.log(`[streamChat] Request headers:`, headers);
+
+//     const body = JSON.stringify({ message });
+//     console.log(`[streamChat] Request body:`, body);
+
+//     const response = await fetch(`${API_BASE}/chat`, { // Đảm bảo URL đúng với backend
+//       method: "POST",
+//       body: body, // Gửi message từ hàm này
+//       headers: headers,
+//       signal: ctrl.signal, // Nếu cần thiết
+//     });
+
+//     console.log(`[streamChat] Response status: ${response.status}`);
+
+//     if (!response.ok) {
+//       const errorText = await response.text();
+//       console.error(`[streamChat] Response not OK: ${response.status} - ${errorText}`);
+//       throw new Error(`Error: ${response.status}`);
+//     }
+
+//     const chatResult = await response.json();
+//     console.log(`[streamChat] Received chat result:`, chatResult);
+
+//     // Xử lý kết quả từ backend
+//     handleChat(chatResult);
+//   } catch (error) {
+//     console.error('[streamChat] Error during fetch:', error);
+//     handleChat({
+//       id: v4(),  // Sử dụng v4() thay vì uuidv4()
+//       type: "abort",
+//       textResponse: null,
+//       sources: [],
+//       close: true,
+//       error: `An error occurred while streaming response. ${error.message}`,
+//     });
+//   }
+// },
+
+// ================================================================================
+
+// FINAL: Bản chạy tốt đã render xong
+// Nguyên nhân: Do trong hàm streamChat dùng sai tên các trường khi gọi handleChat 
+// Cụ thể: id vs uuid: Trong chatResult từ backend, bạn trả về trường id (ví dụ "09bd552b-d6e2-4e40-a7f8-28b02ed26c16"), 
+// nhưng hàm handleChat sử dụng uuid. Điều này sẽ dẫn đến việc uuid có thể bị undefined, do đó bạn nên sửa đổi đoạn code 
+// để đồng nhất sử dụng hoặc id hoặc uuid.
+// type: Backend của bạn trả về "type": "message", nhưng hàm handleChat mong đợi giá trị "type": "textResponse", "abort", 
+// "statusResponse", v.v. Điều này có nghĩa là "message" không được xử lý trong hàm handleChat. Bạn cần thay đổi type 
+// từ "message" thành một giá trị tương thích mà handleChat có thể xử lý, chẳng hạn "textResponse".
+// chatId: Trường chatId không được trả về từ backend, nhưng trong handleChat có xử lý chatId cho textResponse. 
+// Nếu cần chatId, bạn có thể thêm trường này vào phản hồi của backend nếu có hoặc bỏ qua nếu không cần thiết.
+// action: Trong phản hồi từ backend, không có trường action, nhưng trong handleChat, 
+// action được sử dụng cho các thao tác như reset_chat và rename_thread. Nếu backend không cung cấp action, phần logic này sẽ không được sử dụng.
+
+streamChat: async function ({ slug }, message, handleChat, attachments = []) {
+  const ctrl = new AbortController();
+
+  console.log(`[streamChat] Starting stream with slug: "${slug}", message: "${message}"`);
+
+  // Nghe sự kiện ABORT_STREAM_EVENT để hủy bỏ phản hồi streaming
+  window.addEventListener(ABORT_STREAM_EVENT, () => {
+    ctrl.abort();
+    handleChat({ id: v4(), type: "stopGeneration" }); // Sử dụng v4() để tạo UUID
+    console.log('[streamChat] Streaming aborted by user.');
+  });
+
+  try {
+    // Định nghĩa trực tiếp các headers, bao gồm cả Content-Type: application/json
+    const headers = {
+      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJuaHVhbmhkdWMiLCJpYXQiOjE3MjY5OTcxMzEsImV4cCI6MTcyOTU4OTEzMX0.54odmvBqFl-fKOy7Ksmt9JkO1zqnxQoBJuRsK4ONtSo',
+      'Content-Type': 'application/json',
+      // Thêm các headers khác nếu cần
+    };
+    console.log(`[streamChat] Request headers:`, headers);
+
+    const body = JSON.stringify({ message });
+    console.log(`[streamChat] Request body:`, body);
+
+    const response = await fetch(`${API_BASE}/chat`, { // Đảm bảo URL đúng với backend
       method: "POST",
-      body: JSON.stringify({ message, attachments }),
-      headers: baseHeaders(),
-      signal: ctrl.signal,
-      openWhenHidden: true,
-      async onopen(response) {
-        if (response.ok) {
-          return; // everything's good
-        } else if (
-          response.status >= 400 &&
-          response.status < 500 &&
-          response.status !== 429
-        ) {
-          handleChat({
-            id: v4(),
-            type: "abort",
-            textResponse: null,
-            sources: [],
-            close: true,
-            error: `An error occurred while streaming response. Code ${response.status}`,
-          });
-          ctrl.abort();
-          throw new Error("Invalid Status code response.");
-        } else {
-          handleChat({
-            id: v4(),
-            type: "abort",
-            textResponse: null,
-            sources: [],
-            close: true,
-            error: `An error occurred while streaming response. Unknown Error.`,
-          });
-          ctrl.abort();
-          throw new Error("Unknown error");
-        }
-      },
-      async onmessage(msg) {
-        try {
-          const chatResult = JSON.parse(msg.data);
-          handleChat(chatResult);
-        } catch {}
-      },
-      onerror(err) {
-        handleChat({
-          id: v4(),
-          type: "abort",
-          textResponse: null,
-          sources: [],
-          close: true,
-          error: `An error occurred while streaming response. ${err.message}`,
-        });
-        ctrl.abort();
-        throw new Error();
-      },
+      body: body, // Gửi message từ hàm này
+      headers: headers,
+      signal: ctrl.signal, // Nếu cần thiết
     });
-  },
+
+    console.log(`[streamChat] Response status: ${response.status}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[streamChat] Response not OK: ${response.status} - ${errorText}`);
+      throw new Error(`Error: ${response.status}`);
+    }
+
+    const chatResult = await response.json();
+    console.log(`[streamChat] Received chat result:`, chatResult);
+
+    // Sửa lại để đồng bộ các trường với `handleChat`
+    handleChat({
+      uuid: chatResult.id || v4(),  // Sử dụng id từ backend hoặc tạo uuid mới nếu không có
+      type: chatResult.type === "message" ? "textResponse" : chatResult.type,  // Chuyển "message" thành "textResponse"
+      textResponse: chatResult.textResponse,
+      sources: chatResult.sources || [],
+      close: chatResult.close || false,
+      error: chatResult.error || null,
+    });
+  } catch (error) {
+    console.error('[streamChat] Error during fetch:', error);
+    handleChat({
+      id: v4(),  // Sử dụng v4() thay vì uuidv4()
+      type: "abort",
+      textResponse: null,
+      sources: [],
+      close: true,
+      error: `An error occurred while streaming response. ${error.message}`,
+    });
+  }
+},
+
+// ================================================================================
+
   all: async function () {
     const workspaces = await fetch(`${API_BASE}/workspaces`, {
       method: "GET",

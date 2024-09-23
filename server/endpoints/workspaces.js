@@ -988,6 +988,19 @@ function workspaceEndpoints(app) {
           response.status(500).json({ success: false, error: reason }).end();
           return;
         }
+        
+        let apiUrl;
+        if (fileExtension === "csv") {
+          apiUrl = "http://103.75.180.15/v1/datasets/18cb9306-32e8-487a-993c-586b2c563cc3/documents/59abce73-608a-459c-a47d-0d9276ea6b83/segments";
+        } else if (fileExtension === "docx") {
+          apiUrl = "http://103.75.180.15/v1/datasets/0770fc48-186c-45a8-8a85-2f80abeb593a/documents/8a81cf1f-8dc1-42dc-88ac-5fe641604392/segments";
+        } else {
+          response.status(400).json({
+            success: false,
+            error: "Unsupported file type. Only .csv and .docx are supported.",
+          }).end();
+          return;
+        }
 
         const data = {
           "segments": [
@@ -1001,10 +1014,10 @@ function workspaceEndpoints(app) {
           ]
         }
 
-        const res = await fetch("http://103.75.180.47/v1/datasets/18cb9306-32e8-487a-993c-586b2c563cc3/documents/59abce73-608a-459c-a47d-0d9276ea6b83/segments", {
+        const res = await fetch(apiUrl, {
           method: "POST",
           headers: {
-            "Authorization": "Bearer dataset-oB18KobCvufR8Gf0YjlKW9Ms",
+            "Authorization": "Bearer dataset-gd6wWxuLGm4eVeoxyJVuxARA",
             "content-type": "application/json"
           },
           body: JSON.stringify(data),

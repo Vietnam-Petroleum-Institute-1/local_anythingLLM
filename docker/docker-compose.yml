@@ -5,6 +5,21 @@ networks:
     driver: bridge
 
 services:
+  # # MySQL Service
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: mysql
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: MyStr0ngP@ssw0rd!
+  #     MYSQL_DATABASE: anythingLLM
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+  #   networks:
+  #     - anything-llm
+
+  # AnythingLLM Service
   anything-llm:
     container_name: anythingllm
     build:
@@ -29,3 +44,8 @@ services:
       - anything-llm
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # depends_on:
+    #   - mysql  # Đảm bảo MySQL khởi động trước
+
+volumes:
+  mysql-data:

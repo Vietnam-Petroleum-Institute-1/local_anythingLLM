@@ -2,9 +2,14 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// datasource db {
+//   provider = "mysql"
+//   url      = env("DATABASE_URL")
+// }
+
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:../storage/anythingllm.db"
 }
 
 model api_keys {
@@ -21,15 +26,13 @@ model workspace_documents {
   filename             String
   docpath              String
   workspaceId          Int
-  metadata             String?               @db.Text
+  metadata             String?
   pinned               Boolean?              @default(false)
   watched              Boolean?              @default(false)
   createdAt            DateTime              @default(now())
   lastUpdatedAt        DateTime              @default(now())
-  document_sync_queues document_sync_queues?
   workspace            workspaces            @relation(fields: [workspaceId], references: [id])
-
-  @@index([workspaceId], map: "workspace_documents_workspaceId_fkey")
+  document_sync_queues document_sync_queues?
 }
 
 model invites {
@@ -61,16 +64,16 @@ model users {
   seen_recovery_codes         Boolean?                      @default(false)
   createdAt                   DateTime                      @default(now())
   lastUpdatedAt               DateTime                      @default(now())
-  browser_extension_api_keys  browser_extension_api_keys[]
-  embed_chats                 embed_chats[]
-  embed_configs               embed_configs[]
-  password_reset_tokens       password_reset_tokens[]
-  recovery_codes              recovery_codes[]
-  slash_command_presets       slash_command_presets[]
-  workspace_agent_invocations workspace_agent_invocations[]
   workspace_chats             workspace_chats[]
-  threads                     workspace_threads[]
   workspace_users             workspace_users[]
+  embed_configs               embed_configs[]
+  embed_chats                 embed_chats[]
+  threads                     workspace_threads[]
+  recovery_codes              recovery_codes[]
+  password_reset_tokens       password_reset_tokens[]
+  workspace_agent_invocations workspace_agent_invocations[]
+  slash_command_presets       slash_command_presets[]
+  browser_extension_api_keys  browser_extension_api_keys[]
 }
 
 model recovery_codes {
@@ -105,7 +108,7 @@ model document_vectors {
 model welcome_messages {
   id         Int      @id @default(autoincrement())
   user       String
-  response   String   @db.Text
+  response   String
   orderIndex Int?
   createdAt  DateTime @default(now())
 }
@@ -119,7 +122,7 @@ model workspaces {
   openAiTemp                   Float?
   openAiHistory                Int                            @default(20)
   lastUpdatedAt                DateTime                       @default(now())
-  openAiPrompt                 String?                        @db.Text
+  openAiPrompt                 String?
   similarityThreshold          Float?                         @default(0.25)
   chatProvider                 String?
   chatModel                    String?
@@ -129,12 +132,12 @@ model workspaces {
   agentProvider                String?
   agentModel                   String?
   queryRefusalResponse         String?
-  embed_configs                embed_configs[]
-  workspace_agent_invocations  workspace_agent_invocations[]
+  workspace_users              workspace_users[]
   documents                    workspace_documents[]
   workspace_suggested_messages workspace_suggested_messages[]
+  embed_configs                embed_configs[]
   threads                      workspace_threads[]
-  workspace_users              workspace_users[]
+  workspace_agent_invocations  workspace_agent_invocations[]
 }
 
 model workspace_threads {
@@ -145,8 +148,8 @@ model workspace_threads {
   user_id       Int?
   createdAt     DateTime   @default(now())
   lastUpdatedAt DateTime   @default(now())
-  user          users?     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   workspace     workspaces @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  user          users?     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([workspace_id])
   @@index([user_id])
@@ -168,35 +171,31 @@ model workspace_chats {
   id             Int      @id @default(autoincrement())
   workspaceId    Int
   prompt         String
-  response       String   @db.Text
+  response       String
   include        Boolean  @default(true)
   user_id        Int?
-  thread_id      Int?
-  api_session_id String?
+  thread_id      Int? // No relation to prevent whole table migration
+  api_session_id String? // String identifier for only the dev API to parition chats in any mode.
   createdAt      DateTime @default(now())
   lastUpdatedAt  DateTime @default(now())
   feedbackScore  Boolean?
-  users          users?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@index([user_id], map: "workspace_chats_user_id_fkey")
+  users          users?   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model workspace_agent_invocations {
   id            Int        @id @default(autoincrement())
   uuid          String     @unique
-  prompt        String
+  prompt        String // Contains agent invocation to parse + option additional text for seed.
   closed        Boolean    @default(false)
   user_id       Int?
-  thread_id     Int?
+  thread_id     Int? // No relation to prevent whole table migration
   workspace_id  Int
   createdAt     DateTime   @default(now())
   lastUpdatedAt DateTime   @default(now())
-  user          users?     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  workspace     workspaces @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  user          users?     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  workspace     workspaces @relation(fields: [workspace_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([uuid])
-  @@index([user_id], map: "workspace_agent_invocations_user_id_fkey")
-  @@index([workspace_id], map: "workspace_agent_invocations_workspace_id_fkey")
 }
 
 model workspace_users {
@@ -205,11 +204,8 @@ model workspace_users {
   workspace_id  Int
   createdAt     DateTime   @default(now())
   lastUpdatedAt DateTime   @default(now())
-  users         users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  workspaces    workspaces @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
-
-  @@index([user_id], map: "workspace_users_user_id_fkey")
-  @@index([workspace_id], map: "workspace_users_workspace_id_fkey")
+  workspaces    workspaces @relation(fields: [workspace_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  users         users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model cache_data {
@@ -238,18 +234,15 @@ model embed_configs {
   createdBy                  Int?
   usersId                    Int?
   createdAt                  DateTime      @default(now())
+  workspace                  workspaces    @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
   embed_chats                embed_chats[]
   users                      users?        @relation(fields: [usersId], references: [id])
-  workspace                  workspaces    @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
-
-  @@index([usersId], map: "embed_configs_usersId_fkey")
-  @@index([workspace_id], map: "embed_configs_workspace_id_fkey")
 }
 
 model embed_chats {
   id                     Int           @id @default(autoincrement())
   prompt                 String
-  response               String        @db.Text
+  response               String
   session_id             String
   include                Boolean       @default(true)
   connection_information String?
@@ -258,15 +251,12 @@ model embed_chats {
   createdAt              DateTime      @default(now())
   embed_config           embed_configs @relation(fields: [embed_id], references: [id], onDelete: Cascade)
   users                  users?        @relation(fields: [usersId], references: [id])
-
-  @@index([embed_id], map: "embed_chats_embed_id_fkey")
-  @@index([usersId], map: "embed_chats_usersId_fkey")
 }
 
 model event_logs {
   id         Int      @id @default(autoincrement())
   event      String
-  metadata   String?  @db.Text
+  metadata   String?
   userId     Int?
   occurredAt DateTime @default(now())
 
@@ -278,25 +268,24 @@ model slash_command_presets {
   command       String
   prompt        String
   description   String
-  uid           Int      @default(0)
+  uid           Int      @default(0) // 0 is null user
   userId        Int?
   createdAt     DateTime @default(now())
   lastUpdatedAt DateTime @default(now())
   user          users?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([uid, command])
-  @@index([userId], map: "slash_command_presets_userId_fkey")
 }
 
 model document_sync_queues {
   id             Int                        @id @default(autoincrement())
-  staleAfterMs   Int                        @default(604800000)
+  staleAfterMs   Int                        @default(604800000) // 7 days
   nextSyncAt     DateTime
   createdAt      DateTime                   @default(now())
   lastSyncedAt   DateTime                   @default(now())
   workspaceDocId Int                        @unique
+  workspaceDoc   workspace_documents?       @relation(fields: [workspaceDocId], references: [id], onDelete: Cascade)
   runs           document_sync_executions[]
-  workspaceDoc   workspace_documents        @relation(fields: [workspaceDocId], references: [id], onDelete: Cascade)
 }
 
 model document_sync_executions {
@@ -306,8 +295,6 @@ model document_sync_executions {
   result    String?
   createdAt DateTime             @default(now())
   queue     document_sync_queues @relation(fields: [queueId], references: [id], onDelete: Cascade)
-
-  @@index([queueId], map: "document_sync_executions_queueId_fkey")
 }
 
 model browser_extension_api_keys {
